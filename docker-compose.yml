@@ -19,6 +19,10 @@ services:
     container_name: support-agent-backend
     restart: unless-stopped
     env_file: .env
+    environment:
+      # Overrides the .env value so the container reaches Postgres via the
+      # docker network hostname instead of localhost.
+      - DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     ports:
       - "8000:8000"
     depends_on:
