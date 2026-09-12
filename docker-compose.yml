@@ -1,0 +1,43 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: support-agent-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-support_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-support_agent}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    container_name: support-agent-backend
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  # n8n runs via your existing local Docker install.
+  # If you'd rather manage it here too, uncomment below and remove your
+  # standalone instance to avoid a port conflict.
+  # n8n:
+  #   image: n8nio/n8n:latest
+  #   container_name: support-agent-n8n
+  #   restart: unless-stopped
+  #   ports:
+  #     - "5678:5678"
+  #   volumes:
+  #     - n8n_data:/home/node/.n8n
+  #   depends_on:
+  #     - backend
+
+volumes:
+  pgdata:
+  # n8n_data:

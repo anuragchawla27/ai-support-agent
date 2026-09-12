@@ -1,0 +1,7 @@
+/* Styled properly on Day 12 alongside the ticket list, filters, and
+   analytics widgets. Kept minimal for now. */
+
+body {
+  font-family: system-ui, sans-serif;
+  margin: 2rem;
+}

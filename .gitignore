@@ -1,0 +1,18 @@
+# Secrets -- never commit
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Docker
+pgdata/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# n8n local data
+n8n/.n8n/
