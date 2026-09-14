@@ -50,6 +50,11 @@ class Ticket(Base):
     # Set by response generation + confidence scoring (Day 9-11)
     ai_response = Column(Text, nullable=True)
     confidence_score = Column(Float, nullable=True)
+    conversation_history = Column(Text, nullable=True)
+    # ^ JSON-encoded list of {"role": "customer"|"assistant", "content": str}
+    # turns, oldest first. This is the conversation memory for this
+    # ticket -- follow-up questions on the same ticket get this history
+    # passed to the LLM as context, per Day 9-10's requirement.
 
     # Ticket lifecycle
     status = Column(String(20), nullable=False, default="Processing")
