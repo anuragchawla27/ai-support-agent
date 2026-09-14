@@ -19,11 +19,23 @@ Routers are added incrementally, day by day, per the project roadmap:
 
 from fastapi import FastAPI
 
+from app.db.session import engine, Base
+from app.db import models  # noqa: F401  (import registers models with Base)
+from app.routers import tickets
+
 app = FastAPI(
     title="PranavX Labs - AI Support Agent",
     description="End-to-end AI customer support & ticket resolution backend.",
     version="0.1.0",
 )
+
+
+@app.on_event("startup")
+def on_startup():
+    """Ensures all tables (KnowledgeChunk, Ticket) exist. Safe to run
+    every startup -- create_all only creates tables that don't already
+    exist, it never touches existing data."""
+    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/health")
@@ -32,9 +44,10 @@ def health_check():
     return {"status": "ok"}
 
 
-# --- Routers will be registered here as they're built ---
-# from app.routers import tickets, process, dashboard, auth
-# app.include_router(tickets.router, prefix="/tickets", tags=["tickets"])
+app.include_router(tickets.router, prefix="/tickets", tags=["tickets"])
+
+# --- Routers added in later days ---
+# from app.routers import process, dashboard, auth
 # app.include_router(process.router, prefix="/process", tags=["ai-processing"])
 # app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
 # app.include_router(auth.router, prefix="/auth", tags=["auth"])

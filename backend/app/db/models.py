@@ -4,14 +4,14 @@ SQLAlchemy models.
 KnowledgeChunk -- built Day 3-4/5-6: stores each chunked section of the
 knowledge base docs, plus its vector embedding, used for RAG retrieval.
 
-Ticket -- built Day 7-8. Left as a documented stub below so the exact
-fields (matching the project doc's ticket structure requirement) are
-already planned out.
+Ticket -- built Day 7-8: the structured ticket record. Created at intake
+with status "Processing" (Day 1-2 reliability pattern), then updated as
+classification, response generation, and confidence scoring run.
 """
 
 from datetime import datetime, timezone
 
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean
 from pgvector.sqlalchemy import Vector
 
 from app.db.session import Base
@@ -31,20 +31,36 @@ class KnowledgeChunk(Base):
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
 
-# --- Ticket model: built Day 7-8, matches project doc's required fields ---
-# class Ticket(Base):
-#     __tablename__ = "tickets"
-#     ticket_id = Column(String(36), primary_key=True)
-#     customer_name = Column(String(255))
-#     query_text = Column(Text)
-#     intent = Column(String(100))
-#     priority = Column(String(20))
-#     sentiment = Column(String(20))
-#     ai_response = Column(Text)
-#     confidence_score = Column(Integer)
-#     status = Column(String(20))          # Processing / Resolved / Escalated / Pending-Retry
-#     assigned_team = Column(String(100))
-#     created_at = Column(DateTime)
-#     updated_at = Column(DateTime)
-#     resolution_time = Column(DateTime)
-#     escalation_status = Column(String(20))
+class Ticket(Base):
+    __tablename__ = "tickets"
+
+    ticket_id = Column(String(36), primary_key=True)  # UUID, generated at intake
+
+    # Set at creation (Day 7-8 /tickets/create)
+    customer_name = Column(String(255), nullable=True)
+    customer_email = Column(String(255), nullable=True)
+    query_text = Column(Text, nullable=False)
+
+    # Set by classification (Day 7-8 /tickets/{id}/classify)
+    intent = Column(String(100), nullable=True)
+    intent_confidence = Column(Float, nullable=True)
+    priority = Column(String(20), nullable=True)     # LOW / MEDIUM / HIGH / CRITICAL
+    sentiment = Column(String(20), nullable=True)     # Positive / Neutral / Negative
+
+    # Set by response generation + confidence scoring (Day 9-11)
+    ai_response = Column(Text, nullable=True)
+    confidence_score = Column(Float, nullable=True)
+
+    # Ticket lifecycle
+    status = Column(String(20), nullable=False, default="Processing")
+    # Processing / Resolved / Escalated / Pending-Retry
+    assigned_team = Column(String(100), nullable=True)
+    escalation_status = Column(Boolean, default=False)
+
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )
+    resolution_time = Column(DateTime, nullable=True)
