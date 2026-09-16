@@ -1,7 +1,288 @@
-/* Styled properly on Day 12 alongside the ticket list, filters, and
-   analytics widgets. Kept minimal for now. */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #14171c;
+  --surface: #1c2028;
+  --surface-raised: #21252e;
+  --border: #2a2f3a;
+  --text: #e8eaed;
+  --text-dim: #8b92a0;
+  --accent: #4fd1c5;
+
+  --status-processing: #d9a441;
+  --status-resolved: #4fb286;
+  --status-escalated: #e0793c;
+
+  --priority-low: #6b92a0;
+  --priority-medium: #d9a441;
+  --priority-high: #e0793c;
+  --priority-critical: #e85c5c;
+}
+
+* { box-sizing: border-box; }
 
 body {
-  font-family: system-ui, sans-serif;
-  margin: 2rem;
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.hidden { display: none !important; }
+
+/* ---------- Login screen ---------- */
+
+.login-screen {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-form {
+  width: 320px;
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+
+.login-form h1 {
+  font-size: 20px;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.login-form p {
+  color: var(--text-dim);
+  font-size: 14px;
+  margin: 0 0 20px;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 10px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--text);
+  font-family: inherit;
+  font-size: 14px;
+  margin-bottom: 12px;
+}
+
+.login-form input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: -1px;
+  border-color: var(--accent);
+}
+
+.login-form button {
+  width: 100%;
+  padding: 10px;
+  background: var(--accent);
+  color: #0f1115;
+  border: none;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login-form button:hover { opacity: 0.9; }
+
+.error-text {
+  color: var(--priority-critical) !important;
+  font-size: 13px;
+  min-height: 18px;
+  margin: 8px 0 0 !important;
+}
+
+/* ---------- Dashboard shell ---------- */
+
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+
+.dashboard-header h1 {
+  font-size: 22px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.logout-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 6px 14px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.logout-btn:hover { color: var(--text); border-color: var(--text-dim); }
+
+/* ---------- Analytics stat cards ---------- */
+
+.analytics {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  background: var(--surface);
+  padding: 18px 20px;
+  border-left: 3px solid var(--accent);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-value {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 26px;
+  font-weight: 500;
+}
+
+.stat-label {
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+/* ---------- Filters ---------- */
+
+.filters {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+.filters select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 7px 10px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 14px;
+  min-width: 140px;
+}
+
+.filters button {
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.filters button:hover { border-color: var(--accent); }
+
+/* ---------- Ticket table ---------- */
+
+.ticket-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+thead th {
+  text-align: left;
+  padding: 10px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  border-bottom: 1px solid var(--border);
+}
+
+tbody td {
+  padding: 12px 14px;
+  font-size: 13.5px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+tbody tr:last-child td { border-bottom: none; }
+tbody tr:hover { background: var(--surface-raised); }
+
+.query-cell {
+  max-width: 280px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.confidence-cell, .created-cell {
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12.5px;
+  color: var(--text-dim);
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid currentColor;
+}
+
+.badge.status-processing { color: var(--status-processing); }
+.badge.status-resolved { color: var(--status-resolved); }
+.badge.status-escalated { color: var(--status-escalated); }
+
+.badge.priority-low { color: var(--priority-low); }
+.badge.priority-medium { color: var(--priority-medium); }
+.badge.priority-high { color: var(--priority-high); }
+.badge.priority-critical { color: var(--priority-critical); }
+
+.empty-state {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+@media (max-width: 720px) {
+  .analytics { grid-template-columns: repeat(2, 1fr); }
+  .filters { flex-wrap: wrap; }
+  .ticket-list { overflow-x: auto; }
+  table { min-width: 720px; }
 }

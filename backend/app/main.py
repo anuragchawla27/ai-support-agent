@@ -18,15 +18,28 @@ Routers are added incrementally, day by day, per the project roadmap:
 """
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.db.session import engine, Base
 from app.db import models  # noqa: F401  (import registers models with Base)
-from app.routers import tickets
+from app.routers import tickets, dashboard, auth
 
 app = FastAPI(
     title="PranavX Labs - AI Support Agent",
     description="End-to-end AI customer support & ticket resolution backend.",
     version="0.1.0",
+)
+
+# The frontend is a separate static HTML/CSS/JS app (opened directly or
+# served from a different origin than the API), so the browser needs
+# explicit permission to call this API. allow_origins=["*"] is fine for
+# local development; narrow this to the real frontend URL before any
+# public deployment.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
@@ -45,9 +58,9 @@ def health_check():
 
 
 app.include_router(tickets.router, prefix="/tickets", tags=["tickets"])
+app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
+app.include_router(auth.router, prefix="/auth", tags=["auth"])
 
 # --- Routers added in later days ---
-# from app.routers import process, dashboard, auth
+# from app.routers import process
 # app.include_router(process.router, prefix="/process", tags=["ai-processing"])
-# app.include_router(dashboard.router, prefix="/dashboard", tags=["dashboard"])
-# app.include_router(auth.router, prefix="/auth", tags=["auth"])

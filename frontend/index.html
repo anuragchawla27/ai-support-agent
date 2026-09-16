@@ -2,13 +2,95 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PranavX Labs — Support Dashboard</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <!-- Login gate goes here (Day 12, Section 15 requires auth on dashboard) -->
-  <!-- Ticket list, filters (status/priority), and basic analytics built Day 12 -->
-  <h1>Support Dashboard — coming Day 12</h1>
+
+  <!-- Login gate (Day 12, Section 15: dashboard must be protected) -->
+  <div id="login-screen" class="login-screen">
+    <form id="login-form" class="login-form">
+      <h1>Support Dashboard</h1>
+      <p>Enter the dashboard password to continue.</p>
+      <input type="password" id="password-input" placeholder="Password" autocomplete="current-password" required>
+      <button type="submit">Log in</button>
+      <p id="login-error" class="error-text"></p>
+    </form>
+  </div>
+
+  <!-- Main dashboard, hidden until authenticated -->
+  <div id="dashboard" class="dashboard hidden">
+    <header class="dashboard-header">
+      <h1>Support Dashboard</h1>
+      <button id="logout-btn" class="logout-btn">Log out</button>
+    </header>
+
+    <section class="analytics">
+      <div class="stat-card">
+        <span class="stat-value" id="stat-total">-</span>
+        <span class="stat-label">Total tickets</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="stat-resolved">-</span>
+        <span class="stat-label">Resolved</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="stat-escalated">-</span>
+        <span class="stat-label">Escalated</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-value" id="stat-processing">-</span>
+        <span class="stat-label">Processing</span>
+      </div>
+    </section>
+
+    <section class="filters">
+      <label>
+        Status
+        <select id="filter-status">
+          <option value="">All</option>
+          <option value="Processing">Processing</option>
+          <option value="Resolved">Resolved</option>
+          <option value="Escalated">Escalated</option>
+        </select>
+      </label>
+      <label>
+        Priority
+        <select id="filter-priority">
+          <option value="">All</option>
+          <option value="LOW">Low</option>
+          <option value="MEDIUM">Medium</option>
+          <option value="HIGH">High</option>
+          <option value="CRITICAL">Critical</option>
+        </select>
+      </label>
+      <button id="refresh-btn">Refresh</button>
+    </section>
+
+    <section class="ticket-list">
+      <table>
+        <thead>
+          <tr>
+            <th>Customer</th>
+            <th>Query</th>
+            <th>Intent</th>
+            <th>Priority</th>
+            <th>Sentiment</th>
+            <th>Status</th>
+            <th>Team</th>
+            <th>Confidence</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="ticket-table-body">
+          <!-- rows inserted by app.js -->
+        </tbody>
+      </table>
+      <p id="empty-state" class="empty-state hidden">No tickets match these filters.</p>
+    </section>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>
