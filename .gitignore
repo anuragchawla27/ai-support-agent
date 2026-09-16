@@ -16,3 +16,6 @@ Thumbs.db
 
 # n8n local data
 n8n/.n8n/
+
+# Application logs
+logs/

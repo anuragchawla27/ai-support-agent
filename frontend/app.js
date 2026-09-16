@@ -150,7 +150,7 @@ function renderTickets(tickets) {
       <td>${escapeHtml(t.sentiment || "-")}</td>
       <td><span class="${badgeClass("status", t.status)}">${t.status}</span></td>
       <td>${escapeHtml(t.assigned_team || "-")}</td>
-      <td class="confidence-cell">${t.confidence_score != null ? t.confidence_score.toFixed(2) : "-"}</td>
+      <td class="confidence-cell">${t.confidence_score != null ? Math.round(t.confidence_score * 100) + "%" : "-"}</td>
       <td class="created-cell">${formatDate(t.created_at)}</td>
     `;
     tableBody.appendChild(row);

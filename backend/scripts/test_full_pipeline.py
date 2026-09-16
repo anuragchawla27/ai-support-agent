@@ -1,11 +1,14 @@
 """
-Full pipeline dry-run test (Day 11).
+Full pipeline dry-run test (Day 11, updated Day 13).
 
 Chains classify -> retrieve -> respond -> confidence -> escalation
 decision, all without touching the database or ticket endpoints. Useful
 for quickly seeing the whole decision end-to-end, and for calibrating
 CONFIDENCE_AUTO_RESOLVE_THRESHOLD (in .env) before Day 14's full test
 suite runs 30-50 queries through the real system.
+
+Day 13 update: escalation now also considers sentiment (negative
+sentiment always escalates) and flags likely prompt-injection attempts.
 
 Run:
     python backend/scripts/test_full_pipeline.py
@@ -25,6 +28,7 @@ from app.services.intent import classify_query  # noqa: E402
 from app.services.rag import retrieve  # noqa: E402
 from app.services.response import generate_response  # noqa: E402
 from app.services.confidence import compute_confidence, decide_escalation, assign_team  # noqa: E402
+from app.services.guardrails import contains_injection_attempt  # noqa: E402
 
 
 def main():
@@ -34,14 +38,19 @@ def main():
         if not query or query.lower() in ("quit", "exit"):
             break
 
+        injection_flagged = contains_injection_attempt(query)
+
         classification = classify_query(query)
         chunks = retrieve(query, top_k=3)
         response = generate_response(query, chunks)
         confidence = compute_confidence(classification["intent_confidence"], chunks, response)
-        escalate = decide_escalation(
-            confidence["confidence_score"], classification["priority"], classification["intent"]
+        escalate = injection_flagged or decide_escalation(
+            confidence["confidence_score"],
+            classification["priority"],
+            classification["intent"],
+            classification["sentiment"],
         )
-        team = assign_team(classification["intent"]) if escalate else None
+        team = ("Security Review" if injection_flagged else assign_team(classification["intent"])) if escalate else None
 
         print(f"\n  intent:      {classification['intent']}  (confidence={classification['intent_confidence']:.2f})")
         print(f"  priority:    {classification['priority']}")
@@ -52,6 +61,8 @@ def main():
         else:
             print("  retrieval:   no chunks found")
         print(f"  confidence:  {confidence['confidence_score']:.4f}  (uncertainty_detected={confidence['uncertainty_detected']})")
+        if injection_flagged:
+            print("  guardrail:   possible prompt injection detected")
         print(f"  decision:    {'ESCALATE -> ' + team if escalate else 'AUTO-RESOLVE'}")
         print()
 

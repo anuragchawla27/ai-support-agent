@@ -20,9 +20,12 @@ Routers are added incrementally, day by day, per the project roadmap:
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.logging_config import setup_logging
 from app.db.session import engine, Base
 from app.db import models  # noqa: F401  (import registers models with Base)
 from app.routers import tickets, dashboard, auth
+
+logger = setup_logging()
 
 app = FastAPI(
     title="PranavX Labs - AI Support Agent",
@@ -49,6 +52,7 @@ def on_startup():
     every startup -- create_all only creates tables that don't already
     exist, it never touches existing data."""
     Base.metadata.create_all(bind=engine)
+    logger.info("Application startup complete -- tables verified.")
 
 
 @app.get("/health")

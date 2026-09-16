@@ -16,11 +16,12 @@ The auto-resolve threshold is NOT hardcoded -- it's read from
 CONFIDENCE_AUTO_RESOLVE_THRESHOLD (app/config.py, backed by .env), so it
 can be tuned during Day 14 testing without touching code.
 
-Escalation additionally always triggers for certain intents/priorities
-regardless of confidence, per the escalation policy in
-knowledge_base/docs/policies.md: payments, refunds, complaints, and
-anything HIGH/CRITICAL priority always go to a human, even if the AI is
-"confident" about its answer.
+Escalation additionally always triggers for certain intents/priorities/
+sentiment regardless of confidence, per the escalation policy in
+knowledge_base/docs/policies.md and Section H of the project brief
+("customer complaints and high negative sentiment"): payments, refunds,
+complaints, negative sentiment, and anything HIGH/CRITICAL priority
+always go to a human, even if the AI is "confident" about its answer.
 """
 
 from typing import List, Optional
@@ -45,6 +46,9 @@ UNCERTAINTY_PHRASES = [
 # per the escalation policy -- the AI never resolves these on its own.
 ALWAYS_ESCALATE_INTENTS = {"Complaint"}
 ALWAYS_ESCALATE_PRIORITIES = {"HIGH", "CRITICAL"}
+# Section H: "Customer complaints and high negative sentiment" is its
+# own explicit escalation trigger, independent of intent/priority.
+ALWAYS_ESCALATE_SENTIMENTS = {"Negative"}
 
 # Which team a ticket is routed to when escalated, by intent.
 TEAM_BY_INTENT = {
@@ -98,19 +102,28 @@ def compute_confidence(
     }
 
 
-def decide_escalation(confidence_score: float, priority: Optional[str], intent: Optional[str]) -> bool:
+def decide_escalation(
+    confidence_score: float,
+    priority: Optional[str],
+    intent: Optional[str],
+    sentiment: Optional[str] = None,
+) -> bool:
     """
     Returns True if this ticket should be escalated to a human, False if
     it's safe to auto-resolve. Escalates when ANY of:
     - confidence_score is below CONFIDENCE_AUTO_RESOLVE_THRESHOLD
     - priority is HIGH or CRITICAL
     - intent is one that always requires a human (e.g. Complaint)
+    - sentiment is Negative (Section H: "high negative sentiment" is its
+      own explicit trigger, independent of the other signals)
     """
     if confidence_score < CONFIDENCE_AUTO_RESOLVE_THRESHOLD:
         return True
     if priority in ALWAYS_ESCALATE_PRIORITIES:
         return True
     if intent in ALWAYS_ESCALATE_INTENTS:
+        return True
+    if sentiment in ALWAYS_ESCALATE_SENTIMENTS:
         return True
     return False
 
