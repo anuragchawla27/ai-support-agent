@@ -1,30 +1,23 @@
 # Test dataset
 
-Filled in during Day 14. Per project requirement, needs 30-50 realistic
-queries covering:
+Day 14 requirement: 30-50 realistic queries covering Normal, Difficult,
+Ambiguous, and Sensitive/failure categories.
 
-## Normal queries
-- General questions
-- Service questions
-- Internship questions
+Rather than a manually-filled table, this is implemented as an
+**automated test suite**: `backend/scripts/run_test_suite.py` contains
+36 queries across all four categories, sends each one through the real,
+live API (`/tickets/create` -> `/tickets/{id}/respond`), and generates
+`tests/test_results.md` automatically -- intent, priority, sentiment,
+confidence score, status, assigned team, and pass/fail against expected
+outcome, per query, plus category-level summary stats.
 
-## Difficult queries
-- Information absent from knowledge base
-- Contradictory information
-- Unsupported requests
+Run it with:
 
-## Ambiguous queries
-- Incomplete questions
-- Multiple intents in one query
-- Unclear requests
+    docker-compose up -d postgres
+    uvicorn app.main:app --app-dir backend --reload   (separate terminal)
+    python backend/scripts/run_test_suite.py
 
-## Sensitive & failure queries
-- Payment issues & complaints
-- Simulated API / database failure
-- Timeouts & empty responses
-
----
-
-| # | Query | Category | Expected intent | Expected priority | Expected outcome (auto-resolve / escalate) | Actual result | Pass/Fail |
-|---|---|---|---|---|---|---|---|
-| 1 | | | | | | | |
+That script's own docstring also lists two failure scenarios that need
+a manual step (stopping Postgres, using an invalid API key) rather than
+being automatable -- see the "Manual checks" section of the generated
+`test_results.md` after running it.

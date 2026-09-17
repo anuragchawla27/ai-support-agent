@@ -36,7 +36,7 @@ def _get_model():
     return _model
 
 
-def retrieve(query: str, top_k: int = 3):
+def retrieve(query: str, top_k: int = 4):
     """
     Returns the top_k most relevant knowledge chunks for `query`, or an
     empty list if retrieval fails for any reason (DB unreachable,

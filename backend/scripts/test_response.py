@@ -1,13 +1,14 @@
 """
-Interactive test for grounded response generation (Day 9-10).
+Interactive test for the full Day 9-11 pipeline: retrieval -> grounded
+response -> confidence scoring -> escalation decision.
 
-Chains retrieve() + generate_response() directly, without touching
-tickets or the database -- fast iteration on prompt/response quality.
+Doesn't touch tickets or the database -- fast iteration on response
+quality AND on confidence threshold calibration. Keeps conversation
+history across turns in this session (conversation memory).
 
-Keeps conversation history across turns in this session, so you can test
-follow-up questions and see if conversation memory actually helps (e.g.
-ask about "standard support automation pricing", then ask "what about
-the enterprise tier?" and see if it understands the follow-up).
+This is also a useful preview of Day 14's testing process: try a mix of
+normal, ambiguous, and nonsense queries and watch where the confidence
+score and escalate/resolve decision land.
 
 Run:
     python backend/scripts/test_response.py
@@ -25,10 +26,12 @@ load_dotenv(REPO_ROOT / ".env")
 
 from app.services.rag import retrieve  # noqa: E402
 from app.services.response import generate_response  # noqa: E402
+from app.services.confidence import compute_confidence, decide_outcome  # noqa: E402
+from app.services.intent import classify_query  # noqa: E402
 
 
 def main():
-    print("Response generation test. Type a question (or 'quit' to exit).")
+    print("Full pipeline test. Type a question (or 'quit' to exit).")
     print("Conversation memory is kept across turns in this session.\n")
 
     history = []
@@ -37,18 +40,36 @@ def main():
         if not query or query.lower() in ("quit", "exit"):
             break
 
-        chunks = retrieve(query, top_k=3)
-        response = generate_response(query, chunks, history)
+        classification = classify_query(query)
+        chunks = retrieve(query, top_k=4)
+        generation = generate_response(query, chunks, history)
 
-        print(f"\n  {response}\n")
+        confidence = compute_confidence(
+            chunks, generation["self_confidence"], classification["intent_confidence"]
+        )
+        decision = decide_outcome(
+            confidence, classification["intent"], classification["priority"], classification["sentiment"]
+        )
+
+        print(f"\n  {generation['response']}\n")
+        print(
+            f"  intent: {classification['intent']} ({classification['intent_confidence']:.2f})"
+            f"  priority: {classification['priority']}  sentiment: {classification['sentiment']}"
+        )
         if chunks:
-            print(f"  (grounded in {len(chunks)} chunks, closest distance={chunks[0]['distance']:.4f})")
-        else:
-            print("  (no chunks retrieved -- response should be an honest 'I don't know')")
-        print()
+            print(f"  closest retrieval distance: {chunks[0]['distance']:.4f}")
+        print(
+            f"  self-reported grounded: {generation['grounded']}"
+            f"  self_confidence: {generation['self_confidence']:.2f}"
+        )
+
+        outcome_label = "ESCALATE" if decision["escalate"] else "AUTO-RESOLVE"
+        team_note = f" (team: {decision['assigned_team']})" if decision["escalate"] else ""
+        print(f"  >>> final confidence: {confidence}  ->  {outcome_label}{team_note}")
+        print(f"      reason: {decision['reason']}\n")
 
         history.append({"role": "customer", "content": query})
-        history.append({"role": "assistant", "content": response})
+        history.append({"role": "assistant", "content": generation["response"]})
 
 
 if __name__ == "__main__":

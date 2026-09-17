@@ -1,6 +1,9 @@
 # Services
 
-PranavX Labs offers the following services:
+PranavX Labs offers five core services: AI customer support automation,
+workflow automation consulting, RAG / knowledge retrieval systems,
+custom AI agent development, and internal dashboards and reporting
+automation. Each is detailed below.
 
 ## 1. AI customer support automation
 

@@ -231,7 +231,7 @@ def respond_to_ticket(ticket_id: str, payload: RespondRequest):
         # (see app.services.rag / app.services.response) -- a failure in
         # either still produces a safe, low-confidence result here rather
         # than a 500.
-        context_chunks = retrieve(current_message, top_k=3)
+        context_chunks = retrieve(current_message, top_k=4)
         response_text = generate_response(current_message, context_chunks, history)
 
         confidence_result = compute_confidence(ticket.intent_confidence, context_chunks, response_text)

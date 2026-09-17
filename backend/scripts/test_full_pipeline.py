@@ -41,7 +41,7 @@ def main():
         injection_flagged = contains_injection_attempt(query)
 
         classification = classify_query(query)
-        chunks = retrieve(query, top_k=3)
+        chunks = retrieve(query, top_k=4)
         response = generate_response(query, chunks)
         confidence = compute_confidence(classification["intent_confidence"], chunks, response)
         escalate = injection_flagged or decide_escalation(

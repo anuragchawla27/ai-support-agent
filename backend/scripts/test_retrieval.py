@@ -28,7 +28,7 @@ def main():
         if not query or query.lower() in ("quit", "exit"):
             break
 
-        results = retrieve(query, top_k=3)
+        results = retrieve(query, top_k=4)
         if not results:
             print("  No results found.\n")
             continue
