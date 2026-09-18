@@ -62,10 +62,10 @@ class Ticket(Base):
     assigned_team = Column(String(100), nullable=True)
     escalation_status = Column(Boolean, default=False)
 
-    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(
-        DateTime,
+        DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
         onupdate=lambda: datetime.now(timezone.utc),
     )
-    resolution_time = Column(DateTime, nullable=True)
+    resolution_time = Column(DateTime(timezone=True), nullable=True)
