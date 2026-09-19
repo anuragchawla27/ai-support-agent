@@ -1,11 +1,13 @@
 // Customer-facing query form (Day 15).
 //
-// This is the actual public entry point the n8n workflow's webhook
-// mirrors: create a ticket, then get a response. Unlike the dashboard,
-// this page needs no authentication -- anyone can ask a question.
+// This calls the n8n webhook, which handles the full pipeline itself:
+// create ticket -> classify/respond -> email the customer -> email the
+// team if escalated -> reply back here with the result. n8n is the
+// orchestrator now -- this page no longer talks to the backend directly.
 
-const API_BASE = "http://127.0.0.1:8000";
-// ^ Update this if the backend runs somewhere other than localhost:8000.
+const N8N_WEBHOOK_URL = "http://localhost:5678/webhook/support-query";
+// ^ Update this if your n8n instance runs somewhere other than
+// localhost:5678, or if you rename the webhook path in n8n.
 
 const form = document.getElementById("query-form");
 const submitBtn = document.getElementById("submit-btn");
@@ -27,7 +29,7 @@ form.addEventListener("submit", async (e) => {
   errorBanner.classList.add("hidden");
 
   try {
-    const createRes = await fetch(`${API_BASE}/tickets/create`, {
+    const res = await fetch(N8N_WEBHOOK_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -37,24 +39,12 @@ form.addEventListener("submit", async (e) => {
       }),
     });
 
-    if (!createRes.ok) {
-      const body = await createRes.json().catch(() => ({}));
-      throw new Error(body.detail || "Could not submit your question.");
+    if (!res.ok) {
+      throw new Error("The request didn't go through. Please try again.");
     }
-    const createBody = await createRes.json();
+    const body = await res.json();
 
-    const respondRes = await fetch(`${API_BASE}/tickets/${createBody.ticket_id}/respond`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({}),
-    });
-
-    if (!respondRes.ok) {
-      throw new Error("We received your question but had trouble generating a response.");
-    }
-    const respondBody = await respondRes.json();
-
-    showResult(respondBody, createBody.ticket_id, question);
+    showResult(body, question);
     document.getElementById("question").value = "";
   } catch (err) {
     errorBanner.textContent = err.message || "Something went wrong. Please try again.";
@@ -65,25 +55,21 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-function showResult(respondBody, ticketId, questionAsked) {
-  const isEscalated = respondBody.status === "Escalated";
+function showResult(body, questionAsked) {
+  // The two branches of the n8n workflow return slightly different
+  // shapes (Resolved passes through the backend's "response" field,
+  // Escalated has its own "message" field) -- handle both.
+  const answerText = body.response || body.message || "Thanks for your question -- we'll follow up shortly.";
+  const isEscalated = body.status === "Escalated";
 
   resultCard.classList.remove("hidden");
   resultCard.classList.toggle("escalated", isEscalated);
 
   const questionEcho = `<span style="color: var(--text-dim);">You asked: "${escapeHtml(questionAsked)}"</span><br><br>`;
 
-  if (isEscalated) {
-    resultHeading.textContent = "We're on it";
-    resultText.innerHTML =
-      questionEcho +
-      "Your question needs a closer look from our team. We've logged it and will follow up with you directly.";
-  } else {
-    resultHeading.textContent = "Here's your answer";
-    resultText.innerHTML = questionEcho + escapeHtml(respondBody.response);
-  }
-
-  ticketRef.textContent = `Reference: ${ticketId}`;
+  resultHeading.textContent = isEscalated ? "We're on it" : "Here's your answer";
+  resultText.innerHTML = questionEcho + escapeHtml(answerText);
+  ticketRef.textContent = body.ticket_id ? `Reference: ${body.ticket_id}` : "";
 }
 
 function escapeHtml(str) {

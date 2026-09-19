@@ -11,8 +11,8 @@
       "name": "Webhook - Customer Query",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [-200, 300],
-      "id": "a1b2c3d4-0001-4000-8000-000000000001",
+      "position": [-960, 112],
+      "id": "7fe3c385-05cd-476f-a142-13ae5fc9dd35",
       "webhookId": "support-query-webhook"
     },
     {
@@ -27,8 +27,8 @@
       "name": "Create Ticket",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [40, 300],
-      "id": "a1b2c3d4-0002-4000-8000-000000000002"
+      "position": [-720, 112],
+      "id": "810febee-b0fb-4cbc-8622-205012573226"
     },
     {
       "parameters": {
@@ -42,26 +42,19 @@
       "name": "Get AI Response",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [280, 300],
-      "id": "a1b2c3d4-0003-4000-8000-000000000003"
+      "position": [-480, 112],
+      "id": "678c0dbd-3bd0-417f-b87f-dc81bd68ffdf"
     },
     {
       "parameters": {
         "conditions": {
-          "options": {
-            "caseSensitive": true,
-            "leftValue": "",
-            "typeValidation": "strict"
-          },
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 1 },
           "conditions": [
             {
               "id": "cond-1",
-              "leftValue": "={{ $json.status }}",
+              "leftValue": "={{ $('Get AI Response').item.json.status }}",
               "rightValue": "Escalated",
-              "operator": {
-                "type": "string",
-                "operation": "equals"
-              }
+              "operator": { "type": "string", "operation": "equals" }
             }
           ],
           "combinator": "and"
@@ -71,101 +64,80 @@
       "name": "Was It Escalated?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [520, 300],
-      "id": "a1b2c3d4-0004-4000-8000-000000000004"
-    },
-    {
-      "parameters": {
-        "fromEmail": "notifications@pranavxlabs.example",
-        "toEmail": "={{ $json.assigned_team === \"Sales\" ? \"sales@pranavxlabs.example\" : $json.assigned_team === \"Engineering\" ? \"support@pranavxlabs.example\" : $json.assigned_team === \"Internship Coordination\" ? \"internships@pranavxlabs.example\" : \"hello@pranavxlabs.example\" }}",
-        "subject": "=Ticket Escalated: {{ $json.assigned_team }} ({{ $json.ticket_id }})",
-        "emailFormat": "text",
-        "text": "=A ticket needs human review.\n\nTicket ID: {{ $json.ticket_id }}\nAssigned team: {{ $json.assigned_team }}\nConfidence score: {{ $json.confidence_score }}\nFlagged for security review: {{ $json.flagged_for_review }}\n\nAI's attempted response:\n{{ $json.response }}\n\nReview this ticket in the dashboard.",
-        "options": {}
-      },
-      "name": "Notify Team",
-      "type": "n8n-nodes-base.emailSend",
-      "typeVersion": 2.1,
-      "position": [760, 200],
-      "id": "a1b2c3d4-0005-4000-8000-000000000005",
-      "credentials": {
-        "smtp": {
-          "id": "REPLACE_WITH_YOUR_SMTP_CREDENTIAL_ID",
-          "name": "SMTP account"
-        }
-      },
-      "notes": "Configure SMTP credentials in n8n (Credentials > Add > SMTP) before using this node. See docs/n8n-workflow-setup.md."
+      "position": [-32, 112],
+      "id": "8e77b848-aff6-467c-958b-ab9407306c48"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"message\": \"Your question needs a closer look from our specialist team, and we will follow up with you directly.\", \"ticket_id\": $json.ticket_id, \"status\": $json.status } }}",
+        "responseBody": "={{ { \"message\": \"Your question needs a closer look from our specialist team, and we will follow up with you directly.\", \"ticket_id\": $('Get AI Response').item.json.ticket_id, \"status\": $('Get AI Response').item.json.status } }}",
         "options": {}
       },
       "name": "Respond - Escalated",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1000, 200],
-      "id": "a1b2c3d4-0006-4000-8000-000000000006"
+      "position": [448, 0],
+      "id": "28f7024a-0615-4da5-9f1b-e2870059d0b3"
     },
     {
       "parameters": {
         "respondWith": "json",
-        "responseBody": "={{ { \"message\": $json.response, \"ticket_id\": $json.ticket_id, \"status\": $json.status } }}",
+        "responseBody": "={{ { \"message\": $('Get AI Response').item.json.response, \"ticket_id\": $('Get AI Response').item.json.ticket_id, \"status\": $('Get AI Response').item.json.status } }}",
         "options": {}
       },
       "name": "Respond - Resolved",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [760, 420],
-      "id": "a1b2c3d4-0007-4000-8000-000000000007"
+      "position": [208, 224],
+      "id": "e8063b9d-646e-4016-a6b9-96919c39d2ab"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Webhook - Customer Query').item.json.body.customer_email }}",
+        "subject": "={{ $json.status === 'Resolved' ? 'Your Answer from PranavX Labs' : 'We Received Your Question — PranavX Labs' }}",
+        "message": "={{ $json.status === 'Resolved' ? ('Hi ' + ($('Webhook - Customer Query').item.json.body.customer_name || 'there') + ',\\n\\nThanks for reaching out to PranavX Labs. Here is your answer:\\n\\n' + $json.response + '\\n\\nBest,\\nPranavX Labs Support') : ('Hi ' + ($('Webhook - Customer Query').item.json.body.customer_name || 'there') + ',\\n\\nThanks for reaching out to PranavX Labs. Your question needs a closer look from our specialist team, and we will follow up with you directly soon.\\n\\nYour question: ' + $('Webhook - Customer Query').item.json.body.query_text + '\\n\\nBest,\\nPranavX Labs Support') }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [-272, 112],
+      "id": "6340859c-118a-4a62-a066-bb8bc5577916",
+      "name": "Email Customer",
+      "webhookId": "83e6de69-6b08-4a96-9905-4db6874343eb",
+      "credentials": { "gmailOAuth2": { "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID", "name": "Gmail account" } }
+    },
+    {
+      "parameters": {
+        "sendTo": "REPLACE_WITH_YOUR_TEAM_OR_TEST_EMAIL",
+        "subject": "={{ \"INTERNAL: Ticket Escalated - \" + $('Get AI Response').item.json.assigned_team }}",
+        "message": "={{ \"A ticket needs human review.\\n\\nTicket ID: \" + $('Get AI Response').item.json.ticket_id + \"\\nAssigned team: \" + $('Get AI Response').item.json.assigned_team + \"\\nConfidence: \" + $('Get AI Response').item.json.confidence_score + \"\\nCustomer: \" + $('Webhook - Customer Query').item.json.body.customer_email + \"\\n\\nAI's attempted response:\\n\" + $('Get AI Response').item.json.response }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [176, 32],
+      "id": "69e4a65b-e92b-482e-b1d0-dbb22fba529a",
+      "name": "Notify Team",
+      "webhookId": "c471c22a-7bcc-4273-b5f5-215685843939",
+      "credentials": { "gmailOAuth2": { "id": "REPLACE_WITH_YOUR_CREDENTIAL_ID", "name": "Gmail account" } }
     }
   ],
+  "pinData": {},
   "connections": {
-    "Webhook - Customer Query": {
-      "main": [
-        [
-          { "node": "Create Ticket", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "Create Ticket": {
-      "main": [
-        [
-          { "node": "Get AI Response", "type": "main", "index": 0 }
-        ]
-      ]
-    },
-    "Get AI Response": {
-      "main": [
-        [
-          { "node": "Was It Escalated?", "type": "main", "index": 0 }
-        ]
-      ]
-    },
+    "Webhook - Customer Query": { "main": [[{ "node": "Create Ticket", "type": "main", "index": 0 }]] },
+    "Create Ticket": { "main": [[{ "node": "Get AI Response", "type": "main", "index": 0 }]] },
+    "Get AI Response": { "main": [[{ "node": "Email Customer", "type": "main", "index": 0 }]] },
     "Was It Escalated?": {
       "main": [
-        [
-          { "node": "Notify Team", "type": "main", "index": 0 }
-        ],
-        [
-          { "node": "Respond - Resolved", "type": "main", "index": 0 }
-        ]
+        [{ "node": "Notify Team", "type": "main", "index": 0 }],
+        [{ "node": "Respond - Resolved", "type": "main", "index": 0 }]
       ]
     },
-    "Notify Team": {
-      "main": [
-        [
-          { "node": "Respond - Escalated", "type": "main", "index": 0 }
-        ]
-      ]
-    }
+    "Email Customer": { "main": [[{ "node": "Was It Escalated?", "type": "main", "index": 0 }]] },
+    "Notify Team": { "main": [[{ "node": "Respond - Escalated", "type": "main", "index": 0 }]] }
   },
   "active": false,
-  "settings": {
-    "executionOrder": "v1"
-  },
-  "meta": {
-    "instanceId": "pranavx-ai-support-agent"
-  }
+  "settings": { "executionOrder": "v1", "binaryMode": "separate" },
+  "meta": { "instanceId": "pranavx-ai-support-agent" },
+  "tags": []
 }
